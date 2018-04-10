@@ -1,32 +1,16 @@
-/*
-  Arduino Starter Kit example
- Project 6  - Light Theremin
-
- This sketch is written to accompany Project 6 in the
- Arduino Starter Kit
-
+/* 
  Parts required:
  photoresistor
  10 kilohm resistor
- piezo
+ lamp
 
- Created 13 September 2012
- by Scott Fitzgerald
-
- http://www.arduino.cc/starterKit
-
- This example code is part of the public domain
+ Created 10 April 2018
+ by Joel Klint
 */
 
 char MESSAGE[10] = "20186066\n";
 
-// variable to hold sensor value
-int sensorValue;
-// variable to calibrate low value
-int sensorLow = 1023;
-// variable to calibrate high value
-int sensorHigh = 0;
-// variable which sais if phototransistor recieves one or zero
+// Value where phototransistor identifies 1 or 0
 int sensorThreshold = 511;
 // LED pin
 const int ledPin = 13;
@@ -46,6 +30,11 @@ void setup() {
   pinMode(ledPin, OUTPUT);
 
   turnOnLamp();
+
+  int sensorValue;
+  int sensorLow = 0;
+  int sensorHigh = 1023;
+  sensorThreshold = 511;
 
   // calibrate for the first five seconds after program runs
   while (millis() < 2000) {
@@ -93,38 +82,47 @@ void setup() {
 }
 
 void loop() {
-  // Loop over all chars
-  for(int i=0; i < sizeof(MESSAGE); i++) {
-    char send_char = MESSAGE[i];
-
-    char received_char;
-
-    // Loop over the bits in char
-    for(int j=7; j >= 0; j--) {
-      
-      // Send the bit
-      if(bitRead(send_char, j) == 1) {
-        turnOnLamp();
-        //Serial.print("1");
-      } else {
-        turnOffLamp();
-        //Serial.print("0");
+  // For benchmarking
+  unsigned long start_time = millis();
+  unsigned long measure_time = 0;
+  unsigned long bits_transmitted = 0;
+  while((measure_time = millis() - start_time) < 10000) {
+  
+    // Loop over all chars
+    for(int i=0; i < sizeof(MESSAGE); i++) {
+      char send_char = MESSAGE[i];
+  
+      char received_char;
+  
+      // Loop over the bits in char
+      for(int j=7; j >= 0; j--) {
+        
+        // Send the bit
+        if(bitRead(send_char, j) == 1) {
+          turnOnLamp();
+        } else {
+          turnOffLamp();
+        }
+  
+        // Receive the bit
+        int sensorValue = analogRead(A0);
+        if(sensorValue < sensorThreshold) {
+          bitWrite(received_char, j, 0);
+        } else {
+          bitWrite(received_char, j, 1);
+        }
+        bits_transmitted++;
       }
-
-      // Receive the bit
-      sensorValue = analogRead(A0);
-      if(sensorValue < sensorThreshold) {
-        bitWrite(received_char, j, 0);
-        //Serial.print("0");
-      } else {
-        bitWrite(received_char, j, 1);
-        //Serial.print("1");
-      }
-      //Serial.println(sensorValue);
-      
-      //delay(10);
+      Serial.print(received_char);
     }
-    Serial.print(received_char);
+
   }
+
+  Serial.print("Bitrate: ");
+  measure_time = measure_time/1000;
+  Serial.print(bits_transmitted / measure_time);
+  Serial.println(" bps");
+  delay(5000);
+  
 }
 
