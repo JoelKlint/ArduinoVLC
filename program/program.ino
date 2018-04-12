@@ -36,7 +36,7 @@ void setup() {
   int sensorHigh = 1023;
   sensorThreshold = 511;
 
-  // calibrate for the first five seconds after program runs
+  // calibrate for the first four seconds after program starts
   while (millis() < 2000) {
     // record the maximum sensor value
     sensorValue = analogRead(A0);
@@ -122,7 +122,7 @@ void loop() {
   measure_time = measure_time/1000;
   Serial.print(bits_transmitted / measure_time);
   Serial.println(" bps");
-  delay(5000);
+  delay(2000);
   
 }
 
